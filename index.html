@@ -1,92 +1,87 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>韓文字拼字遊戲</title>
   <style>
-    body {
-      font-family: "Noto Sans KR", sans-serif;
+    html, body {
       margin: 0;
-      padding: 10px;
+      padding: 0;
+      height: 100vh;
+      font-family: "Noto Sans KR", sans-serif;
       background-color: #f0f0f0;
+      overflow: hidden;
     }
-    h2 {
-      text-align: center;
-    }
-    #buttonContainer {
+    #container {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      margin-bottom: 10px;
+      height: 100vh;
     }
-    .buttonGroup {
+    #header, #output, #controls, #result {
+      flex-shrink: 0;
+      padding: 5px;
+      text-align: center;
+      font-size: 14px;
+    }
+    #jamoButtons {
+      flex-grow: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    #consonantButtons, #vowelButtons {
+      flex: 1;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      margin-bottom: 10px;
-    }
-    .buttonGroup h4 {
-      width: 100%;
-      text-align: center;
+      align-content: flex-start;
+      padding: 4px;
+      box-sizing: border-box;
     }
     .jamoBtn {
-      margin: 4px;
-      padding: 10px;
-      font-size: 20px;
-    }
-    #controlButtons {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 10px;
+      margin: 2px;
+      padding: 6px;
+      font-size: 16px;
+      width: 18%;
+      text-align: center;
     }
     #controlButtons button {
-      font-size: 16px;
-      padding: 8px 12px;
-    }
-    #output {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    #result {
-      text-align: center;
-      font-weight: bold;
-      margin-top: 10px;
+      margin: 3px;
+      padding: 6px 10px;
+      font-size: 12px;
     }
   </style>
 </head>
 <body>
-  <h2>🔊 聽音拼韓文</h2>
-  <button id="audioPlayBtn" onclick="playAudio()">▶ 播放音檔</button>
-  <audio id="player"></audio>
-
-  <div id="buttonContainer">
-    <div class="buttonGroup">
-      <h4>子音</h4>
-      <div id="consonantButtons"></div>
+  <div id="container">
+    <div id="header">
+      <h3>🔊 韓文聽力拼字</h3>
+      <button onclick="playAudio()">▶ 播放音檔</button>
+      <audio id="player"></audio>
+      <p>題目 <span id="questionNumber">1</span> / <span id="totalQuestions">10</span></p>
     </div>
-    <div class="buttonGroup">
-      <h4>母音</h4>
+
+    <div id="output">
+      <p>📝 正在拼的字：<span id="currentSyllable"></span></p>
+      <p>📘 已拼好的單字：<span id="fullWord"></span></p>
+    </div>
+
+    <div id="jamoButtons">
+      <div id="consonantButtons"></div>
       <div id="vowelButtons"></div>
     </div>
-  </div>
 
-  <div id="controlButtons">
-    <button onclick="deleteLast()">⌫ 刪除拼音</button>
-    <button onclick="finishSyllable()">✅ 完成這個字</button>
-    <button onclick="deleteLastWord()">🗑️ 刪除一個字</button>
-    <button onclick="submitAnswer()">🚀 送出答案</button>
-    <button id="nextBtn" style="display:none;" onclick="nextQuestion()">➡️ 下一題</button>
+    <div id="controls">
+      <div id="controlButtons">
+        <button onclick="deleteLast()">⌫ 刪除拼音</button>
+        <button onclick="finishSyllable()">✅ 完成這個字</button>
+        <button onclick="deleteLastWord()">🗑️ 刪除一個字</button>
+        <button onclick="submitAnswer()">🚀 送出答案</button>
+        <button id="nextBtn" style="display:none;" onclick="nextQuestion()">➡️ 下一題</button>
+      </div>
+      <div id="result"></div>
+    </div>
   </div>
-
-  <div id="output">
-    <p>題目 <span id="questionNumber">1</span> / <span id="totalQuestions">10</span></p>
-    <p>📝 正在拼的字：<span id="currentSyllable"></span></p>
-    <p>📘 已拼好的單字：<span id="fullWord"></span></p>
-  </div>
-  <div id="result"></div>
 
   <script>
     const questions = [
@@ -150,8 +145,7 @@
     }
 
     function updateCurrent() {
-      const current = document.getElementById('currentSyllable');
-      current.textContent = `${selectedChoseong}${selectedJungseong}${selectedJongseong}`;
+      document.getElementById('currentSyllable').textContent = `${selectedChoseong}${selectedJungseong}${selectedJongseong}`;
     }
 
     function deleteLast() {
@@ -178,14 +172,24 @@
     }
 
     function submitAnswer() {
-      const full = document.getElementById('fullWord').textContent;
+      const fullElement = document.getElementById('fullWord');
+      const input = fullElement.textContent;
       const correct = questions[currentIndex].answer;
       const result = document.getElementById('result');
-      if (full === correct) {
+
+      if (input === correct) {
         result.textContent = `✅ 正確！答案是：${correct}`;
         document.getElementById('nextBtn').style.display = 'inline-block';
       } else {
         wrongCount++;
+
+        // 清除錯誤答案與拼音
+        fullElement.textContent = '';
+        selectedChoseong = '';
+        selectedJungseong = '';
+        selectedJongseong = '';
+        document.getElementById('currentSyllable').textContent = '';
+
         if (wrongCount >= 3) {
           result.textContent = `❌ 答錯 3 次！正確答案是：${correct}`;
           document.getElementById('nextBtn').style.display = 'inline-block';
