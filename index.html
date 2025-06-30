@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>韓文字拼字遊戲</title>
+  <style>
+    body {
+      font-family: "Noto Sans KR", sans-serif, Arial;
+      padding: 10px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fafafa;
+    }
+    h2 {
+      font-size: 22px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    #audioPlayBtn {
+      font-size: 18px;
+      padding: 8px 16px;
+      margin-bottom: 15px;
+      cursor: pointer;
+    }
+    #buttonContainer {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .buttonGroup {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .buttonGroup h4 {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+    button.jamoBtn {
+      font-size: 22px;
+      padding: 10px 14px;
+      border: 1.5px solid #888;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button.jamoBtn:hover {
+      background-color: #d4e9ff;
+      border-color: #5a9bf6;
+    }
+    #controlButtons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    #controlButtons button {
+      font-size: 16px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      border: none;
+      background-color: #5a9bf6;
+      color: white;
+      cursor: pointer;
+      flex: 1 1 40%;
+      max-width: 160px;
+      min-width: 120px;
+    }
+    #controlButtons button:hover:not(:disabled) {
+      background-color: #4178d6;
+    }
+    #controlButtons button:disabled {
+      background-color: #bbb;
+      cursor: default;
+    }
+    #output {
+      font-size: 20px;
+      text-align: center;
+      max-width: 95%;
+      word-wrap: break-word;
+    }
+    #result {
+      font-size: 18px;
+      color: #333;
+      font-weight: bold;
+      margin-top: 10px;
+      text-align: center;
+    }
+    @media (max-width: 600px) {
+      button.jamoBtn {
+        font-size: 26px;
+        padding: 10px 16px;
+      }
+      #controlButtons button {
+        font-size: 18px;
+        padding: 12px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>🔊 聽音拼韓文（手機版支援）</h2>
+  <button id="audioPlayBtn" onclick="playAudio()">▶ 播放音檔</button>
+  <audio id="player" src=""></audio>
+  <div id="buttonContainer">
+    <div class="buttonGroup">
+      <h4>子音</h4>
+      <div id="consonantButtons"></div>
+    </div>
+    <div class="buttonGroup">
+      <h4>母音</h4>
+      <div id="vowelButtons"></div>
+    </div>
+  </div>
+  <div id="controlButtons">
+    <button onclick="deleteLast()">⌫ 刪除拼音</button>
+    <button onclick="finishSyllable()">✅ 完成這個字</button>
+    <button onclick="deleteLastWord()">🗑️ 刪除一個字</button>
+    <button onclick="submitAnswer()">🚀 送出答案</button>
+    <button id="nextBtn" style="display:none;" onclick="nextQuestion()">➡️ 下一題</button>
+  </div>
+  <div id="output">
+    <p>題目 <span id="questionNumber">1</span> / <span id="totalQuestions">10</span></p>
+    <p>📝 正在拼的字：<span id="currentSyllable"></span></p>
+    <p>📘 已拼好的單字：<span id="fullWord"></span></p>
+  </div>
+  <div id="result"></div>
+  <script>
+    const consonants = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    const vowels = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+
+    function createButtons() {
+      const consonantArea = document.getElementById('consonantButtons');
+      const vowelArea = document.getElementById('vowelButtons');
+
+      consonants.forEach(char => {
+        const btn = document.createElement('button');
+        btn.textContent = char;
+        btn.className = 'jamoBtn';
+        btn.onclick = () => handleJamoInput(char);
+        consonantArea.appendChild(btn);
+      });
+
+      vowels.forEach(char => {
+        const btn = document.createElement('button');
+        btn.textContent = char;
+        btn.className = 'jamoBtn';
+        btn.onclick = () => handleJamoInput(char);
+        vowelArea.appendChild(btn);
+      });
+    }
+
+    function handleJamoInput(char) {
+      const current = document.getElementById('currentSyllable');
+      current.textContent += char;
+    }
+
+    function deleteLast() {
+      const current = document.getElementById('currentSyllable');
+      current.textContent = current.textContent.slice(0, -1);
+    }
+
+    function finishSyllable() {
+      const current = document.getElementById('currentSyllable');
+      const full = document.getElementById('fullWord');
+      full.textContent += current.textContent;
+      current.textContent = '';
+    }
+
+    function deleteLastWord() {
+      const full = document.getElementById('fullWord');
+      full.textContent = full.textContent.slice(0, -1);
+    }
+
+    function submitAnswer() {
+      const result = document.getElementById('result');
+      const full = document.getElementById('fullWord').textContent;
+      result.textContent = `你輸入的答案是：${full}`;
+      document.getElementById('nextBtn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      document.getElementById('currentSyllable').textContent = '';
+      document.getElementById('fullWord').textContent = '';
+      document.getElementById('result').textContent = '';
+      document.getElementById('nextBtn').style.display = 'none';
+      const qNum = document.getElementById('questionNumber');
+      qNum.textContent = parseInt(qNum.textContent) + 1;
+    }
+
+    function playAudio() {
+      const player = document.getElementById('player');
+      player.src = 'your-audio-file.mp3'; // 改成你實際的音檔路徑
+      player.play();
+    }
+
+    window.onload = createButtons;
+  </script>
+</body>
+</html>
